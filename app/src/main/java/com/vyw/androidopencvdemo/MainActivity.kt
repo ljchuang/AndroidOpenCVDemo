@@ -1,13 +1,19 @@
 package com.vyw.androidopencvdemo
 
+import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.net.Uri
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import android.widget.SeekBar
 import androidx.appcompat.app.AppCompatActivity
+import com.bumptech.glide.Glide
 import kotlinx.android.synthetic.main.activity_main.*
+import java.io.FileInputStream
 import java.lang.Float.max
+
 
 class MainActivity : AppCompatActivity(), SeekBar.OnSeekBarChangeListener {
 
@@ -18,6 +24,14 @@ class MainActivity : AppCompatActivity(), SeekBar.OnSeekBarChangeListener {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
+        val intent: Intent?= getIntent()
+
+        val data: Uri?= intent?.data
+        val data1: String ?= data?.getQueryParameter("key1").toString()
+        val data2: String ?= data?.getQueryParameter("key2").toString()
+        Log.d("TAG: ", data1)
+        Log.d("TAG: ", data2)
+
         // Load the original image
         srcBitmap = BitmapFactory.decodeResource(this.resources, R.drawable.mountain)
 
@@ -27,6 +41,29 @@ class MainActivity : AppCompatActivity(), SeekBar.OnSeekBarChangeListener {
         imageView.setImageBitmap(dstBitmap)
 
         sldSigma.setOnSeekBarChangeListener(this)
+
+        if (intent != null && intent.data != null) {
+            Thread({
+                // a potentially time consuming task
+                srcBitmap = Glide.with(this)
+                        .asBitmap()
+                        .load(data1)
+                        .submit()
+                        .get()
+
+                dstBitmap = srcBitmap!!.copy(srcBitmap!!.config, true)
+
+                imageView.post {
+                    imageView.setImageBitmap(dstBitmap)
+                }
+            }).start()
+
+            runOnUiThread {
+                Glide.with(this)
+                    .load(data2)
+                    .into(imageView2)
+            }
+        }
     }
 
     fun doBlur() {
